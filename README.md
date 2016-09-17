@@ -1308,13 +1308,13 @@ autocommand](#the-ycmquickfixopened-autocommand).
 
 Looks up the current line for a header and jumps to it.
 
-Supported in filetypes: `c, cpp, objc, objcpp`
+Supported in filetypes: `c, cpp, cuda, objc, objcpp`
 
 #### The `GoToDeclaration` subcommand
 
 Looks up the symbol under the cursor and jumps to its declaration.
 
-Supported in filetypes: `c, cpp, objc, objcpp, cs, go, python, rust`
+Supported in filetypes: `c, cpp, cuda, objc, objcpp, cs, go, python, rust`
 
 #### The `GoToDefinition` subcommand
 
@@ -1325,7 +1325,7 @@ namely when the definition of the symbol is in the current translation unit. A
 translation unit consists of the file you are editing and all the files you are
 including with `#include` directives (directly or indirectly) in that file.
 
-Supported in filetypes: `c, cpp, objc, objcpp, cs, go, javascript, python,
+Supported in filetypes: `c, cpp, cuda, objc, objcpp, cs, go, javascript, python,
 rust, typescript`
 
 #### The `GoTo` subcommand
@@ -1337,7 +1337,8 @@ the current translation unit, jumps to the symbol's declaration. For
 C/C++/Objective-C, it first tries to look up the current line for a header and
 jump to it. For C#, implementations are also considered and preferred.
 
-Supported in filetypes: `c, cpp, objc, objcpp, cs, go, javascript, python, rust`
+Supported in filetypes: `c, cpp, cuda, objc, objcpp, cs, go, javascript, python,
+rust`
 
 #### The `GoToImprecise` subcommand
 
@@ -1350,7 +1351,7 @@ changes since the last parse that would lead to incorrect jumps. When you're
 just browsing around your codebase, this command can spare you quite a bit of
 latency.
 
-Supported in filetypes: `c, cpp, objc, objcpp`
+Supported in filetypes: `c, cpp, cuda, objc, objcpp`
 
 #### The `GoToReferences` subcommand
 
@@ -1410,7 +1411,7 @@ std::cout << *x; // invoking on x returns "const char ** => const char **"
 
 **NOTE:** Causes re-parsing of the current translation unit.
 
-Supported in filetypes: `c, cpp, objc, objcpp, javascript, typescript`
+Supported in filetypes: `c, cpp, cuda, objc, objcpp, javascript, typescript`
 
 #### The `GetTypeImprecise` subcommand
 
@@ -1423,7 +1424,7 @@ changes since the last parse that would lead to incorrect type. When you're
 just browsing around your codebase, this command can spare you quite a bit of
 latency.
 
-Supported in filetypes: `c, cpp, objc, objcpp`
+Supported in filetypes: `c, cpp, cuda, objc, objcpp`
 
 #### The `GetParent` subcommand
 
@@ -1454,7 +1455,7 @@ For global declarations, the semantic parent is the translation unit.
 
 **NOTE:** Causes re-parsing of the current translation unit.
 
-Supported in filetypes: `c, cpp, objc, objcpp`
+Supported in filetypes: `c, cpp, cuda, objc, objcpp`
 
 #### The `GetDoc` subcommand
 
@@ -1466,7 +1467,7 @@ under the cursor. Depending on the file type, this includes things like:
 * Python docstrings,
 * etc.
 
-Supported in filetypes: `c, cpp, objc, objcpp, cs, python, typescript,
+Supported in filetypes: `c, cpp, cuda, objc, objcpp, cs, python, typescript,
 javascript, rust`
 
 #### The `GetDocImprecise` subcommand
@@ -1480,7 +1481,7 @@ changes since the last parse that would lead to incorrect docs. When you're
 just browsing around your codebase, this command can spare you quite a bit of
 latency.
 
-Supported in filetypes: `c, cpp, objc, objcpp`
+Supported in filetypes: `c, cpp, cuda, objc, objcpp`
 
 ### Refactoring and FixIt Commands
 
@@ -1524,7 +1525,7 @@ the diagnostics UI.  This is particularly useful where there are multiple
 diagnostics on one line, or where after fixing one diagnostic, another fix-it is
 available.
 
-Supported in filetypes: `c, cpp, objc, objcpp, cs`
+Supported in filetypes: `c, cpp, cuda, objc, objcpp, cs`
 
 #### The `RefactorRename <new name>` subcommand
 
@@ -1600,7 +1601,7 @@ of course).
 This command clears that cache entirely. YCM will then re-query your
 `FlagsForFile` function as needed in the future.
 
-Supported in filetypes: `c, cpp, objc, objcpp`
+Supported in filetypes: `c, cpp, cuda, objc, objcpp`
 
 #### The `ReloadSolution` subcommand
 
