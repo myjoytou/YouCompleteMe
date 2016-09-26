@@ -696,12 +696,21 @@ function! s:OnBlankLine()
 endfunction
 
 
+function! s:OverTextWidthWithAutomaticWrapping()
+  return &formatoptions =~# '[tca]' &&
+       \ &textwidth &&
+       \ virtcol( '.' ) > &textwidth + 1
+endfunction
+
+
 function! s:InvokeCompletion()
   if &completefunc != "youcompleteme#Complete"
     return
   endif
 
-  if s:InsideCommentOrStringAndShouldStop() || s:OnBlankLine()
+  if s:InsideCommentOrStringAndShouldStop() ||
+   \ s:OnBlankLine() ||
+   \ s:OverTextWidthWithAutomaticWrapping()
     return
   endif
 
