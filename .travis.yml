@@ -8,7 +8,12 @@ before_install:
 install:
   # source because it sets up env vars on some platforms
   - source ci/travis/travis_install.sh
-script: ./run_tests.py
+script:
+  - python --version
+  - which nosetests
+  - which flake8
+  - ./run_tests.py
+  - cat third_party/ycmd/PYTHON_USED_DURING_BUILDING
 after_success:
   - codecov
 env:
