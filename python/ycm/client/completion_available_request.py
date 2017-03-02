@@ -27,16 +27,16 @@ from ycm.client.base_request import ( BaseRequest, BuildRequestData,
                                       HandleServerException )
 
 
-class CompleterAvailableRequest( BaseRequest ):
+class CompletionAvailableRequest( BaseRequest ):
   def __init__( self, filetypes ):
-    super( CompleterAvailableRequest, self ).__init__()
-    self.filetypes = filetypes
+    super( CompletionAvailableRequest, self ).__init__()
+    self._filetypes = filetypes
     self._response = None
 
 
   def Start( self ):
     request_data = BuildRequestData()
-    request_data.update( { 'filetypes': self.filetypes } )
+    request_data.update( { 'filetypes': self._filetypes } )
     with HandleServerException():
       self._response = self.PostDataToHandler( request_data,
                                                'semantic_completion_available' )
@@ -46,8 +46,8 @@ class CompleterAvailableRequest( BaseRequest ):
     return self._response
 
 
-def SendCompleterAvailableRequest( filetypes ):
-  request = CompleterAvailableRequest( filetypes )
+def SendCompletionAvailableRequest( filetypes ):
+  request = CompletionAvailableRequest( filetypes )
   # This is a blocking call.
   request.Start()
   return request.Response()

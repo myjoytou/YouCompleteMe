@@ -24,7 +24,7 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import *  # noqa
 
-from mock import MagicMock, patch
+from mock import DEFAULT, MagicMock, patch
 from hamcrest import assert_that, equal_to
 import contextlib
 import functools
@@ -259,6 +259,24 @@ def MockVimModule():
   sys.modules[ 'vim' ] = VIM_MOCK
 
   return VIM_MOCK
+
+
+@contextlib.contextmanager
+def MockCompletionOrDiagnosticsAvailableRequest( completion, diagnostics ):
+  """Mock out the semantic_completion_available and diagnostics_available
+  endpoints to return respectively the supplied |completion| and |diagnostics|
+  parameters."""
+
+  def CompletionOrDiagnosticsAvailableRequest( request_data, handler ):
+    if handler == 'semantic_completion_available':
+      return completion
+    if handler == 'diagnostics_available':
+      return diagnostics
+    return DEFAULT
+
+  with patch( 'ycm.client.base_request.BaseRequest.PostDataToHandler',
+              side_effect = CompletionOrDiagnosticsAvailableRequest ):
+    yield
 
 
 class ExtendedMock( MagicMock ):

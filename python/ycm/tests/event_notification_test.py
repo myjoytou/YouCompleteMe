@@ -26,6 +26,7 @@ standard_library.install_aliases()
 from builtins import *  # noqa
 
 from ycm.tests.test_utils import ( CurrentWorkingDirectory, ExtendedMock,
+                                   MockCompletionOrDiagnosticsAvailableRequest,
                                    MockVimBuffers, MockVimModule, VimBuffer )
 MockVimModule()
 
@@ -73,12 +74,11 @@ def MockArbitraryBuffer( filetype ):
 
 
 @contextlib.contextmanager
-def MockEventNotification( response_method, native_filetype_completer = True ):
+def MockEventNotification( response_method,
+                           completion = True,
+                           diagnostics = False ):
   """Mock out the EventNotification client request object, replacing the
-  Response handler's JsonFromFuture with the supplied |response_method|.
-  Additionally mock out YouCompleteMe's FiletypeCompleterExistsForFiletype
-  method to return the supplied |native_filetype_completer| parameter, rather
-  than querying the server"""
+  Response handler's JsonFromFuture with the supplied |response_method|."""
 
   # We don't want the event to actually be sent to the server, just have it
   # return success
@@ -98,12 +98,10 @@ def MockEventNotification( response_method, native_filetype_completer = True ):
                 side_effect = response_method ):
 
       # Filetype available information comes from the server, so rather than
-      # relying on that request, we mock out the check. The caller decides if
-      # filetype completion is available
-      with patch(
-        'ycm.youcompleteme.YouCompleteMe.FiletypeCompleterExistsForFiletype',
-        return_value = native_filetype_completer ):
-
+      # relying on the response, we mock out the request. The caller decides if
+      # filetype completion and diagnostics are available.
+      with MockCompletionOrDiagnosticsAvailableRequest( completion,
+                                                        diagnostics ):
         yield
 
 
@@ -153,7 +151,7 @@ def EventNotification_FileReadyToParse_NonDiagnostic_Error_NonNative_test(
     ycm, vim_command ):
 
   with MockArbitraryBuffer( 'javascript' ):
-    with MockEventNotification( None, False ):
+    with MockEventNotification( None, completion = False ):
       ycm.OnFileReadyToParse()
       ycm.HandleFileParseRequest()
       vim_command.assert_not_called()
@@ -279,7 +277,8 @@ def _Check_FileReadyToParse_Diagnostic_Error( ycm, vim_command ):
     return [ BuildDiagnosticData( diagnostic ) ]
 
   with MockArbitraryBuffer( 'cpp' ):
-    with MockEventNotification( DiagnosticResponse ):
+    with MockEventNotification( DiagnosticResponse,
+                                diagnostics = True ):
       ycm.OnFileReadyToParse()
       ok_( ycm.FileParseRequestReady() )
       ycm.HandleFileParseRequest()
@@ -312,7 +311,8 @@ def _Check_FileReadyToParse_Diagnostic_Warning( ycm, vim_command ):
     return [ BuildDiagnosticData( diagnostic ) ]
 
   with MockArbitraryBuffer( 'cpp' ):
-    with MockEventNotification( DiagnosticResponse ):
+    with MockEventNotification( DiagnosticResponse,
+                                diagnostics = True ):
       ycm.OnFileReadyToParse()
       ok_( ycm.FileParseRequestReady() )
       ycm.HandleFileParseRequest()
@@ -339,7 +339,8 @@ def _Check_FileReadyToParse_Diagnostic_Clean( ycm, vim_command ):
   # when there are no errors/warnings left.
   # Should be called after _Check_FileReadyToParse_Diagnostic_Warning
   with MockArbitraryBuffer( 'cpp' ):
-    with MockEventNotification( MagicMock( return_value = [] ) ):
+    with MockEventNotification( MagicMock( return_value = [] ),
+                                diagnostics = True ):
       ycm.OnFileReadyToParse()
       ycm.HandleFileParseRequest()
       vim_command.assert_has_calls( [

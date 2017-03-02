@@ -44,12 +44,15 @@ from ycm import syntax_parse
 from ycm.client.ycmd_keepalive import YcmdKeepalive
 from ycm.client.base_request import ( BaseRequest, BuildRequestData,
                                       HandleServerException )
-from ycm.client.completer_available_request import SendCompleterAvailableRequest
+from ycm.client.completion_available_request import (
+    SendCompletionAvailableRequest )
 from ycm.client.command_request import SendCommandRequest
 from ycm.client.completion_request import ( CompletionRequest,
                                             ConvertCompletionDataToVimData )
 from ycm.client.debug_info_request import ( SendDebugInfoRequest,
                                             FormatDebugInfoResponse )
+from ycm.client.diagnostics_available_request import (
+    SendDiagnosticsAvailableRequest )
 from ycm.client.omni_completion_request import OmniCompletionRequest
 from ycm.client.event_notification import ( SendEventNotificationAsync,
                                             EventNotification )
@@ -101,7 +104,6 @@ CORE_OUTDATED_MESSAGE = (
   'YCM core library too old; PLEASE RECOMPILE by running the install.py '
   'script. See the documentation for more details.' )
 SERVER_IDLE_SUICIDE_SECONDS = 10800  # 3 hours
-DIAGNOSTIC_UI_FILETYPES = set( [ 'cpp', 'cs', 'c', 'objc', 'objcpp' ] )
 CLIENT_LOGFILE_FORMAT = 'ycm_'
 SERVER_LOGFILE_FORMAT = 'ycmd_{port}_{std}_'
 
@@ -112,7 +114,8 @@ HANDLE_FLAG_INHERIT = 0x00000001
 
 class YouCompleteMe( object ):
   def __init__( self, user_options ):
-    self._available_completers = {}
+    self._completion_available_for_filetype = {}
+    self._diagnostics_available_for_filetype = {}
     self._user_options = user_options
     self._user_notified_about_crash = False
     self._diag_interface = DiagnosticInterface( user_options )
@@ -136,7 +139,8 @@ class YouCompleteMe( object ):
     }
 
   def _SetupServer( self ):
-    self._available_completers = {}
+    self._completion_available_for_filetype = {}
+    self._diagnostics_available_for_filetype = {}
     self._user_notified_about_crash = False
     self._filetypes_with_keywords_loaded = set()
     self._server_is_ready_with_cache = False
@@ -319,22 +323,22 @@ class YouCompleteMe( object ):
     return self._omnicomp
 
 
-  def FiletypeCompleterExistsForFiletype( self, filetype ):
+  def CompletionAvailableForFiletype( self, filetype ):
     try:
-      return self._available_completers[ filetype ]
+      return self._completion_available_for_filetype[ filetype ]
     except KeyError:
       pass
 
-    exists_completer = SendCompleterAvailableRequest( filetype )
-    if exists_completer is None:
+    completion_available = SendCompletionAvailableRequest( filetype )
+    if completion_available is None:
       return False
 
-    self._available_completers[ filetype ] = exists_completer
-    return exists_completer
+    self._completion_available_for_filetype[ filetype ] = completion_available
+    return completion_available
 
 
   def NativeFiletypeCompletionAvailable( self ):
-    return any( [ self.FiletypeCompleterExistsForFiletype( x ) for x in
+    return any( [ self.CompletionAvailableForFiletype( x ) for x in
                   vimsupport.CurrentFiletypes() ] )
 
 
@@ -573,14 +577,29 @@ class YouCompleteMe( object ):
     return self._diag_interface.GetWarningCount()
 
 
-  def DiagnosticUiSupportedForCurrentFiletype( self ):
-    return any( [ x in DIAGNOSTIC_UI_FILETYPES
-                  for x in vimsupport.CurrentFiletypes() ] )
+  def DiagnosticsAvailableForFiletype( self, filetype ):
+    try:
+      return self._diagnostics_available_for_filetype[ filetype ]
+    except KeyError:
+      pass
+
+    diagnostics_available = SendDiagnosticsAvailableRequest( filetype )
+    if diagnostics_available is None:
+      return False
+
+    self._diagnostics_available_for_filetype[ filetype ] = diagnostics_available
+    return diagnostics_available
+
+
+
+  def DiagnosticsAvailable( self ):
+    return any( [ self.DiagnosticsAvailableForFiletype( x ) for x in
+                  vimsupport.CurrentFiletypes() ] )
 
 
   def ShouldDisplayDiagnostics( self ):
     return bool( self._user_options[ 'show_diagnostics_ui' ] and
-                 self.DiagnosticUiSupportedForCurrentFiletype() )
+                 self.DiagnosticsAvailable() )
 
 
   def _PopulateLocationListWithLatestDiagnostics( self ):
