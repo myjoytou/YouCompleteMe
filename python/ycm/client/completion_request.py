@@ -22,10 +22,12 @@ from __future__ import absolute_import
 # Not installing aliases from python-future; it's unreliable and slow.
 from builtins import *  # noqa
 
+import logging
 from ycmd.utils import ToUnicode
-from ycm.client.base_request import ( BaseRequest, JsonFromFuture,
-                                      HandleServerException,
+from ycm.client.base_request import ( BaseRequest, DisplayServerException,
                                       MakeServerException )
+
+_logger = logging.getLogger( __name__ )
 
 
 class CompletionRequest( BaseRequest ):
@@ -33,7 +35,6 @@ class CompletionRequest( BaseRequest ):
     super( CompletionRequest, self ).__init__()
     self.request_data = request_data
     self._response_future = None
-    self._response = { 'completions': [], 'completion_start_column': -1 }
 
 
   def Start( self ):
@@ -47,19 +48,21 @@ class CompletionRequest( BaseRequest ):
 
   def RawResponse( self ):
     if not self._response_future:
-      return self._response
+      return { 'completions': [], 'completion_start_column': -1 }
 
-    with HandleServerException( truncate = True ):
-      self._response = JsonFromFuture( self._response_future )
+    response = self.HandleFuture( self._response_future, truncate = True )
+    if not response:
+      return { 'completions': [], 'completion_start_column': -1 }
 
-      # Vim may not be able to convert the 'errors' entry to its internal format
-      # so we remove it from the response.
-      errors = self._response.pop( 'errors', [] )
-      for e in errors:
-        with HandleServerException( truncate = True ):
-          raise MakeServerException( e )
+    # Vim may not be able to convert the 'errors' entry to its internal format
+    # so we remove it from the response.
+    errors = response.pop( 'errors', [] )
+    for e in errors:
+      exception = MakeServerException( e )
+      _logger.error( exception )
+      DisplayServerException( exception, truncate = True )
 
-    return self._response
+    return response
 
 
   def Response( self ):

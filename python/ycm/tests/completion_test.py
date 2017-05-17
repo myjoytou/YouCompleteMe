@@ -29,7 +29,7 @@ from ycm.tests.test_utils import ( CurrentWorkingDirectory, ExtendedMock,
 MockVimModule()
 
 import contextlib
-from hamcrest import assert_that, contains, empty, has_entries
+from hamcrest import assert_that, contains, empty, equal_to, has_entries
 from mock import call, MagicMock, patch
 from nose.tools import ok_
 
@@ -42,22 +42,19 @@ def MockCompletionRequest( response_method ):
   """Mock out the CompletionRequest, replacing the response handler
   JsonFromFuture with the |response_method| parameter."""
 
-  # We don't want the event to actually be sent to the server, just have it
+  # We don't want the requests to actually be sent to the server, just have it
   # return success.
-  with patch( 'ycm.client.completion_request.CompletionRequest.'
-              'PostDataToHandlerAsync',
-              return_value = MagicMock( return_value=True ) ):
+  with patch( 'ycm.client.completer_available_request.'
+              'CompleterAvailableRequest.PostDataToHandler',
+              return_value = True ):
+    with patch( 'ycm.client.completion_request.CompletionRequest.'
+                'PostDataToHandlerAsync',
+                return_value = MagicMock( return_value=True ) ):
 
-    # We set up a fake response (as called by CompletionRequest.RawResponse)
-    # which calls the supplied callback method.
-    #
-    # Note: JsonFromFuture is actually part of ycm.client.base_request, but we
-    # must patch where an object is looked up, not where it is defined.
-    # See https://docs.python.org/dev/library/unittest.mock.html#where-to-patch
-    # for details.
-    with patch( 'ycm.client.completion_request.JsonFromFuture',
-                side_effect = response_method ):
-      yield
+      # We set up a fake response.
+      with patch( 'ycm.client.base_request.JsonFromFuture',
+                  side_effect = response_method ):
+        yield
 
 
 @YouCompleteMeInstance()
@@ -83,7 +80,7 @@ def SendCompletionRequest_UnicodeWorkingDirectory_test( ycm ):
 
 
 @YouCompleteMeInstance()
-@patch( 'ycm.client.base_request._logger', autospec = True )
+@patch( 'ycm.client.completion_request._logger', autospec = True )
 @patch( 'ycm.vimsupport.PostVimMessage', new_callable = ExtendedMock )
 def SendCompletionRequest_ResponseContainingError_test( ycm,
                                                         post_vim_message,
@@ -117,8 +114,16 @@ def SendCompletionRequest_ResponseContainingError_test( ycm,
       ycm.SendCompletionRequest()
       ok_( ycm.CompletionRequestReady() )
       response = ycm.GetCompletionResponse()
-      logger.exception.assert_called_with( 'Error while handling server '
-                                           'response' )
+      # FIXME
+      # logger.error.assert_called_with( ServerError( 'Exception: message' ) )
+      import pprint
+      pprint.pprint( logger.error.call_args[ 0 ][ 0 ] )
+      pprint.pprint( ServerError( 'Exception: message' ) )
+      pprint.pprint( logger.error.call_args[ 0 ][ 0 ] == ServerError( 'Exception: message' ) )
+      assert_that(
+        logger.error.call_args[ 0 ][ 0 ],
+        equal_to( ServerError( 'Exception: message' ) )
+      )
       post_vim_message.assert_has_exact_calls( [
         call( 'Exception: message', truncate = True )
       ] )
